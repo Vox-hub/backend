@@ -12,7 +12,7 @@ const paddleRoutes = require("./api/routes/paddle");
 const contactRoutes = require("./api/routes/contact");
 
 mongoose.connect(
-  `mongodb+srv://memeshare:${process.env.MONGO_ATLAS_PW}@memeshare.vvcby.mongodb.net/?retryWrites=true&w=majority`,
+  `mongodb+srv://doadmin:${process.env.MONGO_ATLAS_PW}@storytalk-db-159c383b.mongo.ondigitalocean.com/admin?tls=true&authSource=admin&replicaSet=storytalk-db`,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
