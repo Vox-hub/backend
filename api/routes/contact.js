@@ -8,14 +8,14 @@ router.post("/send", (req, res, next) => {
   sendEmail(
     process.env.AUTH_USER,
     process.env.AUTH_USER,
-    `Platform: Contact from ${fullname}`,
+    `StoryTalk: Contact from ${fullname}`,
     `
              
                 <h2>Fullname: ${fullname}</h2>
                 <h2>Email: ${email}</h2>
                 <p>${message}</p>             
                
-                <b>Thanks, Platform</b>
+                <b>Thanks, StoryTalk</b>
                 `
   ).then(() => {
     res.status(200).json({ message: "Message sent!" });

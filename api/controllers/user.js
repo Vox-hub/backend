@@ -114,7 +114,7 @@ exports.signUp = (req, res, next) => {
               .sendEmail(
                 process.env.AUTH_USER,
                 req.body.email,
-                "Platform: Verify your email address",
+                "StoryTalk: Verify your email address",
                 `
              
                 <h2>Hello ${req.body.firstname} ${req.body.lastname}</h2>
@@ -126,7 +126,7 @@ exports.signUp = (req, res, next) => {
                 <p>
                 If you did not sign up for our service, please ignore this email.
                 </p>
-                <b>Thanks, Platform</b>
+                <b>Thanks, StoryTalk</b>
                 </div>
                 `
               )
@@ -220,7 +220,7 @@ exports.forgotPassword = (req, res, next) => {
         .sendEmail(
           process.env.AUTH_USER,
           req.params.email,
-          "Platform: Password Reset Request",
+          "StoryTalk: Password Reset Request",
           `
           
           <img class="logo" src="https://i.imgur.com/xqtbQ0j_d.png?maxwidth=760&fidelity=grand" width=150 height=150  />
@@ -234,7 +234,7 @@ To reset your password, please click on the link below:
 <a href=https://kamasgold.com/changepassword/${user[0].confirmationCode}> here </a>
 
           </p>
-          <b>Thanks, Platform</b>
+          <b>Thanks, StoryTalk</b>
           </div>
         `
         )
@@ -289,7 +289,7 @@ exports.changePassword = (req, res, next) => {
                     .sendEmail(
                       process.env.AUTH_USER,
                       email,
-                      "Platform: Password Changed Successfully",
+                      "StoryTalk: Password Changed Successfully",
                       `
                       
                 <img class="logo" src="https://i.imgur.com/xqtbQ0j_d.png?maxwidth=760&fidelity=grand" width=150 height=150  />
@@ -300,7 +300,7 @@ exports.changePassword = (req, res, next) => {
 
               If you did make this change, please keep your new password safe and secure. We recommend choosing a strong password that is difficult to guess and changing it periodically to keep your account secure.              
               </p>
-                <b>Thanks, Platform</b>
+                <b>Thanks, StoryTalk</b>
                 </div>
                       `
                     )
