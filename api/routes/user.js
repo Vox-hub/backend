@@ -16,7 +16,7 @@ const {
 } = require("../controllers/user");
 
 // fetching users
-router.get("/", getUsers);
+router.get("/", checkAuth, getUsers);
 router.get("/:user", checkAuth, getUser);
 
 // oath handlers

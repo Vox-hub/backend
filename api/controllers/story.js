@@ -7,6 +7,7 @@ const { Configuration, OpenAIApi } = require("openai");
 const User = require("../models/user");
 const Story = require("../models/story");
 
+const { uploadFile } = require("../utils/spaces");
 const { createRecording } = require("../utils/voice");
 
 const configuration = new Configuration({
@@ -70,56 +71,78 @@ exports.addStory = async (req, res, next) => {
     return result;
   };
   let filename = generateRandomString();
-  const path = Path.resolve(__dirname, "images", `${filename}.jpg`);
+
+  const path = Path.resolve(`images/${filename}.jpg`);
   const writer = Fs.createWriteStream(path);
   const imageResponse = await axios.get(imageUrl, {
     responseType: "stream",
   });
   imageResponse.data.pipe(writer);
-  new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     writer.on("finish", resolve);
     writer.on("error", reject);
   });
 
-  if (req.body.author === "guest") {
-    const story = new Story({
-      _id: new mongoose.Types.ObjectId(),
-      story: text.data.choices[0].text,
-      picture: `${filename}.jpg`,
-    });
+  const fileContent = Fs.readFileSync(path);
 
-    story.save().then(() => {
-      res.status(200).json({
-        message: "Story created",
-        _id: story._id,
-      });
-    });
-  } else {
-    const story = new Story({
-      _id: new mongoose.Types.ObjectId(),
-      story: text.data.choices[0].text,
-      author: req.body.author,
-      picture: `${filename}.jpg`,
-    });
+  const params = {
+    Bucket: "storytalk",
+    Key: `stories/${filename}.jpg`,
+    Body: fileContent,
+    ContentType: "image/jpg",
+  };
 
-    story
-      .save()
-      .then((story) => {
-        User.findOneAndUpdate(
-          { _id: req.body.author },
-          { voiceuuid: req.body.voiceuuid }
-        ).then(() => {
-          User.findByIdAndUpdate(req.body.author, {
-            $push: { stories: story._id },
-          }).then(() => {
+  try {
+    await uploadFile({ params });
+
+    Fs.unlink(path, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        if (req.body.author === "guest") {
+          const story = new Story({
+            _id: new mongoose.Types.ObjectId(),
+            story: text.data.choices[0].text,
+            picture: `stories/${filename}.jpg`,
+          });
+
+          story.save().then(() => {
             res.status(200).json({
               message: "Story created",
               _id: story._id,
             });
           });
-        });
-      })
-      .catch((err) => res.status(500).json({ error: err }));
+        } else {
+          const story = new Story({
+            _id: new mongoose.Types.ObjectId(),
+            story: text.data.choices[0].text,
+            author: req.body.author,
+            picture: `stories/${filename}.jpg`,
+          });
+
+          story
+            .save()
+            .then((story) => {
+              User.findOneAndUpdate(
+                { _id: req.body.author },
+                { voiceuuid: req.body.voiceuuid }
+              ).then(() => {
+                User.findByIdAndUpdate(req.body.author, {
+                  $push: { stories: story._id },
+                }).then(() => {
+                  res.status(200).json({
+                    message: "Story created",
+                    _id: story._id,
+                  });
+                });
+              });
+            })
+            .catch((err) => res.status(500).json({ error: err }));
+        }
+      }
+    });
+  } catch (err) {
+    console.error(err);
   }
 };
 
