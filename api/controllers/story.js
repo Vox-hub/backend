@@ -72,7 +72,7 @@ exports.addStory = async (req, res, next) => {
   };
   let filename = generateRandomString();
 
-  const path = Path.resolve(`images/${filename}.jpg`);
+  const path = Path.resolve(`temp/${filename}.jpg`);
   const writer = Fs.createWriteStream(path);
   const imageResponse = await axios.get(imageUrl, {
     responseType: "stream",
@@ -86,6 +86,7 @@ exports.addStory = async (req, res, next) => {
   const fileContent = Fs.readFileSync(path);
 
   const params = {
+    ACL: "public-read",
     Bucket: "storytalk",
     Key: `stories/${filename}.jpg`,
     Body: fileContent,
@@ -112,7 +113,7 @@ exports.addStory = async (req, res, next) => {
               _id: story._id,
             });
           });
-        } else {
+        } else if (req.body.voiceuuid) {
           const story = new Story({
             _id: new mongoose.Types.ObjectId(),
             story: text.data.choices[0].text,
@@ -134,6 +135,27 @@ exports.addStory = async (req, res, next) => {
                     message: "Story created",
                     _id: story._id,
                   });
+                });
+              });
+            })
+            .catch((err) => res.status(500).json({ error: err }));
+        } else {
+          const story = new Story({
+            _id: new mongoose.Types.ObjectId(),
+            story: text.data.choices[0].text,
+            author: req.body.author,
+            picture: `stories/${filename}.jpg`,
+          });
+
+          story
+            .save()
+            .then((story) => {
+              User.findByIdAndUpdate(req.body.author, {
+                $push: { stories: story._id },
+              }).then(() => {
+                res.status(200).json({
+                  message: "Story created",
+                  _id: story._id,
                 });
               });
             })
