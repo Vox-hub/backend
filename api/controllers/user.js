@@ -114,19 +114,19 @@ exports.signUp = (req, res, next) => {
               .sendEmail(
                 process.env.AUTH_USER,
                 req.body.email,
-                "StoryTalk: Verify your email address",
+                "StoryTalk: Please verify your email address to complete registration",
                 `
              
-                <h2>Hello ${req.body.firstname} ${req.body.lastname}</h2>
+                <h2>Dear ${req.body.firstname} ${req.body.lastname}</h2>
                 <p>
-                Thank you for signing up for our service. To complete the registration process, please verify your email address by clicking on the link below:
+Thank you for signing up for our service. We are excited to have you on board! To complete the registration process, please click the button below to verify your email address:
                 </p>
                 <a href=http://storytalk.ai/verify/${token}> here </a>
                 
                 <p>
                 If you did not sign up for our service, please ignore this email.
                 </p>
-                <b>Thanks, StoryTalk</b>
+                <b>Thanks, StoryTalk Team</b>
                 </div>
                 `
               )
