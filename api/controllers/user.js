@@ -121,7 +121,7 @@ exports.signUp = (req, res, next) => {
                 <p>
                 Thank you for signing up for our service. To complete the registration process, please verify your email address by clicking on the link below:
                 </p>
-                <a href=https://kamasgold.com/verify/${token}> here </a>
+                <a href=http://storytalk.ai/verify/${token}> here </a>
                 
                 <p>
                 If you did not sign up for our service, please ignore this email.
