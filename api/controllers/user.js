@@ -105,7 +105,7 @@ exports.signUp = (req, res, next) => {
               firstname: req.body.firstname,
               lastname: req.body.lastname,
               role: "member",
-              verified: "false",
+              verified: false,
               password: hash,
               confirmationCode: token,
               voiceuuid: "",

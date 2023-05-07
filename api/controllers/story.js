@@ -6,6 +6,7 @@ const { Configuration, OpenAIApi } = require("openai");
 
 const User = require("../models/user");
 const Story = require("../models/story");
+const Subscription = require("../models/subscription");
 
 const { uploadFile } = require("../utils/spaces");
 const { createRecording } = require("../utils/voice");
@@ -19,8 +20,7 @@ exports.getStories = (req, res, next) => {
     .select("_id story author picture isVC createdAt")
     .populate({
       path: "author",
-      select:
-        "_id username email firstname lastname voiceuuid subscriptionData",
+      select: "_id username email firstname lastname subscriptionData",
     })
     .populate("author.subscriptionData")
     .exec()
@@ -33,9 +33,11 @@ exports.getStory = (req, res, next) => {
     .select("_id story author picture isVC createdAt")
     .populate({
       path: "author",
-      select:
-        "_id username email firstname lastname voiceuuid subscriptionData",
-      populate: { path: "subscriptionData", select: "subscription_plan_id" },
+      select: "_id username email firstname lastname subscriptionData",
+      populate: {
+        path: "subscriptionData",
+        select: "subscription_plan_id stories_ttv",
+      },
     })
     .exec()
     .then((doc) => {
@@ -113,32 +115,6 @@ exports.addStory = async (req, res, next) => {
               _id: story._id,
             });
           });
-        } else if (req.body.voiceuuid) {
-          const story = new Story({
-            _id: new mongoose.Types.ObjectId(),
-            story: text.data.choices[0].text,
-            author: req.body.author,
-            picture: `stories/${filename}.jpg`,
-          });
-
-          story
-            .save()
-            .then((story) => {
-              User.findOneAndUpdate(
-                { _id: req.body.author },
-                { voiceuuid: req.body.voiceuuid }
-              ).then(() => {
-                User.findByIdAndUpdate(req.body.author, {
-                  $push: { stories: story._id },
-                }).then(() => {
-                  res.status(200).json({
-                    message: "Story created",
-                    _id: story._id,
-                  });
-                });
-              });
-            })
-            .catch((err) => res.status(500).json({ error: err }));
         } else {
           const story = new Story({
             _id: new mongoose.Types.ObjectId(),
@@ -169,28 +145,57 @@ exports.addStory = async (req, res, next) => {
 };
 
 exports.getAudio = async (req, res, next) => {
-  const { storyId, voiceuuid } = req.body;
+  const { storyId } = req.params;
+  const { voiceId } = req.body;
 
-  var subject = "hello this is a test from the server";
+  try {
+    const storyData = await Story.findById(storyId).populate({
+      path: "author",
+      select: "_id subscriptionData",
+      populate: { path: "subscriptionData", select: "_id stories_ttv" },
+    });
 
-  let response = await createRecording({ subject, voiceuuid });
-
-  Fs.writeFile(
-    `./api/controllers/audios/${storyId}.mp3`,
-    Buffer.from(response.data),
-    { flag: "wx" },
-    (err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      User.findOneAndUpdate({ _id: storyId }, { isVC: true }).then(() => {
-        res.status(200).json({
-          message: "Done",
-        });
-      });
+    if (storyData.isVC) {
+      return res
+        .status(500)
+        .json({ message: "This story already has a recording!" });
     }
-  );
+
+    const audio = {
+      Text: storyData.story,
+      OutputFormat: "mp3",
+      VoiceId: voiceId,
+    };
+    const data = await createRecording(audio);
+    const filePath = `temp/${storyId}.mp3`;
+    Fs.writeFileSync(filePath, data.AudioStream);
+
+    const params = {
+      ACL: "public-read",
+      Bucket: "storytalk",
+      Key: `recording/${storyId}.mp3`,
+      ContentType: "audio/mpeg",
+      Body: Fs.createReadStream(filePath),
+    };
+
+    await uploadFile({ params });
+
+    const newCount = storyData.author.subscriptionData.stories_ttv - 1;
+
+    await Story.updateOne({ _id: storyId }, { isVC: true });
+
+    await Subscription.updateOne(
+      { _id: storyData.author.subscriptionData._id },
+      { stories_ttv: newCount }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Audio created!", path: params.Key });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err });
+  }
 };
 
 exports.updateStory = (req, res, next) => {

@@ -4,10 +4,11 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
+const passport = require("passport");
+const session = require("express-session");
+const passportStrategy = require("./api/utils/passport.js");
 const userRoutes = require("./api/routes/user");
 const storyRoutes = require("./api/routes/story");
-const pathRoutes = require("./api/routes/path");
 const paddleRoutes = require("./api/routes/paddle");
 const contactRoutes = require("./api/routes/contact");
 
@@ -25,18 +26,34 @@ app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    methods: "GET,POST,PATCH,PUT,DELETE",
+    credentials: true,
+  })
+);
+app.use(
+  session({
+    secret: process.env.CLIENT_SECRET,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(function (req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET,HEAD,OPTIONS,POST,PUT,DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin,Cache-Control,Accept,X-Access-Token ,X-Requested-With, Content-Type, Access-Control-Request-Method"
-  );
+  // res.setHeader("Access-Control-Allow-Origin", "*");
+  // res.setHeader("Access-Control-Allow-Credentials", "true");
+  // res.setHeader(
+  //   "Access-Control-Allow-Methods",
+  //   "GET,HEAD,OPTIONS,POST,PUT,DELETE"
+  // );
+  // res.setHeader(
+  //   "Access-Control-Allow-Headers",
+  //   "Origin,Cache-Control,Accept,X-Access-Token ,X-Requested-With, Content-Type, Access-Control-Request-Method"
+  // );
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -45,7 +62,6 @@ app.use(function (req, res, next) {
 
 app.use("/user", userRoutes);
 app.use("/story", storyRoutes);
-app.use("/path", pathRoutes);
 app.use("/paddle", paddleRoutes);
 app.use("/contact", contactRoutes);
 

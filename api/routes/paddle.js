@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   getSubscription,
   createSubscription,
+  addFeatures,
+  removeFeatures,
   cancelSubscription,
 } = require("../controllers/subscription");
 const checkAuth = require("../middleware/check-auth.js");
@@ -19,6 +21,12 @@ router.post("/", (req, res, next) => {
       break;
     case alert === "subscription_cancelled":
       cancelSubscription(req, res, next);
+      break;
+    case alert === "invoice_paid_v2":
+      addFeatures(req, res, next);
+      break;
+    case alert === "invoice_sent_v2":
+      removeFeatures(req, res, next);
       break;
     default:
       console.log("Unknown case");

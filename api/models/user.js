@@ -10,11 +10,12 @@ const userSchema = mongoose.Schema({
     match:
       /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
   },
+  google_id: { type: String },
   firstname: { type: String, required: true },
   lastname: { type: String, required: true },
   role: { type: String },
   verified: { type: Boolean, required: true },
-  password: { type: String, required: true },
+  password: { type: String },
   // avatar: { type: String },
   stories: [
     {
@@ -30,7 +31,6 @@ const userSchema = mongoose.Schema({
     type: String,
     unique: true,
   },
-  voiceuuid: { type: String },
   subscriptionData: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subscription",

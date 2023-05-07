@@ -1,31 +1,24 @@
-const axios = require("axios");
+const AWS = require("aws-sdk");
 
-const labs = axios.create({
-  baseURL: "https://api.elevenlabs.io/v1",
-  headers: {
-    "xi-api-key": process.env.ELEVENLABS_API_KEY,
+const { aws_access_key, aws_secret_access_key } = process.env;
+
+const Polly = new AWS.Polly({
+  signatureVersion: "v4",
+  region: "us-east-1",
+  credentials: {
+    accessKeyId: aws_access_key,
+    secretAccessKey: aws_secret_access_key,
   },
 });
 
-exports.createRecording = async ({ subject, voiceuuid }) => {
-  // prettier-ignore
-  try {
-    const response = await labs.post(
-      `/text-to-speech/${voiceuuid}`,
-      {
-        text: subject,
-        model_id: "eleven_monolingual_v1",
-      },
-      // {
-      //   headers: {
-      //     Accept: "audio/mpeg",
-      //   },
-      //   responseType: "arraybuffer",
-      // }
-    );
+exports.createRecording = async (audio) => {
+  let params = audio;
 
-  return response;
+  try {
+    const data = await Polly.synthesizeSpeech(params).promise();
+
+    return data;
   } catch (err) {
-    console.log(err)
+    console.error(err);
   }
 };

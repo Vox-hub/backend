@@ -15,7 +15,7 @@ router.get("/", getStories);
 router.get("/:storyId", getStory);
 
 router.post("/", addStory);
-router.post("/audio", checkAuth, getAudio);
+router.post("/:storyId/audio", checkAuth, getAudio);
 router.patch("/:storyId", checkAuth, updateStory);
 router.delete("/:storyId", deleteStory);
 

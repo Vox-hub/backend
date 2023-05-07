@@ -30,6 +30,7 @@ exports.createSubscription = (req, res, next) => {
     status: status,
     cancel_url: cancel_url,
     update_url: update_url,
+    stories_ttv: 500,
   });
 
   subscription
@@ -59,4 +60,36 @@ exports.cancelSubscription = (req, res, next) => {
         .catch((err) => res.status(500).json({ error: err }));
     })
     .catch((err) => res.status(500).json({ error: err }));
+};
+
+exports.addFeatures = (req, res, next) => {
+  User.find({ email: req.body.email })
+    .exec()
+    .then((result) => {
+      Subscription.findOneAndUpdate(
+        { _id: result[0].subscriptionData },
+        { stories_ttv: 500 }
+      )
+        .then(() => {
+          res.status(200);
+        })
+        .catch((err) => res.status(500).json({ error: err }));
+    })
+    .catch((err) => res.status(500).json({ err }));
+};
+
+exports.removeFeatures = (req, res, next) => {
+  User.find({ email: req.body.email })
+    .exec()
+    .then((result) => {
+      Subscription.findOneAndUpdate(
+        { _id: result[0].subscriptionData },
+        { stories_ttv: 0 }
+      )
+        .then(() => {
+          res.status(200);
+        })
+        .catch((err) => res.status(500).json({ error: err }));
+    })
+    .catch((err) => res.status(500).json({ err }));
 };
