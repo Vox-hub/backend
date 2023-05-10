@@ -180,18 +180,24 @@ exports.getAudio = async (req, res, next) => {
 
     await uploadFile({ params });
 
-    const newCount = storyData.author.subscriptionData.stories_ttv - 1;
+    Fs.unlink(filePath, async (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        const newCount = storyData.author.subscriptionData.stories_ttv - 1;
 
-    await Story.updateOne({ _id: storyId }, { isVC: true });
+        await Story.updateOne({ _id: storyId }, { isVC: true });
 
-    await Subscription.updateOne(
-      { _id: storyData.author.subscriptionData._id },
-      { stories_ttv: newCount }
-    );
+        await Subscription.updateOne(
+          { _id: storyData.author.subscriptionData._id },
+          { stories_ttv: newCount }
+        );
 
-    return res
-      .status(200)
-      .json({ message: "Audio created!", path: params.Key });
+        return res
+          .status(200)
+          .json({ message: "Audio created!", path: params.Key });
+      }
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err });
