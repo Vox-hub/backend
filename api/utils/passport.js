@@ -21,7 +21,6 @@ passport.use(
           if (result.length >= 1) {
             callback(null, profile);
           } else {
-            console.log(profile._json);
             const user = new User({
               _id: new mongoose.Types.ObjectId(),
               google_id: profile.id,

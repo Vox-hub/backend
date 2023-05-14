@@ -10,7 +10,7 @@ const tokenExp = "24h";
 exports.getUsers = (req, res, next) => {
   User.find()
     .select(
-      "_id firstname lastname email role verified stories voiceuuid createdAt subscriptionData"
+      "_id firstname lastname email role verified confirmationCode stories voiceuuid createdAt subscriptionData"
     )
     .populate("subscriptionData")
     .populate("stories")
@@ -223,7 +223,6 @@ exports.forgotPassword = (req, res, next) => {
           "StoryTalk: Password Reset Request",
           `
           
-          <img class="logo" src="https://i.imgur.com/xqtbQ0j_d.png?maxwidth=760&fidelity=grand" width=150 height=150  />
           <div>
           <h2>Dear ${user[0].firstname} ${user[0].lastname}</h2>
           <p>
@@ -231,7 +230,7 @@ exports.forgotPassword = (req, res, next) => {
 
 To reset your password, please click on the link below:
 
-<a href=https://kamasgold.com/changepassword/${user[0].confirmationCode}> here </a>
+<a href=${process.env.CLIENT_URL}/forgotpassword/${user[0].confirmationCode}> here </a>
 
           </p>
           <b>Thanks, StoryTalk</b>
@@ -292,7 +291,6 @@ exports.changePassword = (req, res, next) => {
                       "StoryTalk: Password Changed Successfully",
                       `
                       
-                <img class="logo" src="https://i.imgur.com/xqtbQ0j_d.png?maxwidth=760&fidelity=grand" width=150 height=150  />
                 <div>
                 <h2>Hello ${user[0].firstname} ${user[0].lastname}</h2>
               <p>
