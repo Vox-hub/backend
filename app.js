@@ -13,7 +13,7 @@ const paddleRoutes = require("./api/routes/paddle");
 const contactRoutes = require("./api/routes/contact");
 
 mongoose.connect(
-  `mongodb+srv://doadmin:${process.env.MONGO_ATLAS_PW}@storytalk-db-159c383b.mongo.ondigitalocean.com/admin?tls=true&authSource=admin&replicaSet=storytalk-db`,
+  `mongodb+srv://doadmin:${process.env.MONGO_ATLAS_PW}@storytalk-db-f77a717d.mongo.ondigitalocean.com/admin?tls=true&authSource=admin`,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,

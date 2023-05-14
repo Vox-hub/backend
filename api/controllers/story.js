@@ -184,14 +184,15 @@ exports.getAudio = async (req, res, next) => {
       if (err) {
         console.error(err);
       } else {
-        const newCount = storyData.author.subscriptionData.stories_ttv - 1;
+        if (storyData?.author?.subscriptionData) {
+          const newCount = storyData.author.subscriptionData.stories_ttv - 1;
+          await Subscription.updateOne(
+            { _id: storyData.author.subscriptionData._id },
+            { stories_ttv: newCount }
+          );
+        }
 
         await Story.updateOne({ _id: storyId }, { isVC: true });
-
-        await Subscription.updateOne(
-          { _id: storyData.author.subscriptionData._id },
-          { stories_ttv: newCount }
-        );
 
         return res
           .status(200)
