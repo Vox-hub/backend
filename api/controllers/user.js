@@ -56,6 +56,7 @@ exports.signIn = (req, res, next) => {
               lastname: user[0].lastname,
               email: user[0].email,
               role: user[0].role,
+              confirmationCode: user[0].confirmationCode,
             },
             process.env.PRIVATE_KEY,
             {
@@ -189,6 +190,7 @@ exports.updateUser = (req, res, next) => {
                 lastname: user.lastname,
                 email: user.email,
                 role: user.role,
+                confirmationCode: user[0].confirmationCode,
               },
               process.env.PRIVATE_KEY,
               {
@@ -277,6 +279,7 @@ exports.changePassword = (req, res, next) => {
                       lastname: user[0].lastname,
                       email: user[0].email,
                       role: user[0].role,
+                      confirmationCode: user[0].confirmationCode,
                     },
                     process.env.PRIVATE_KEY,
                     {

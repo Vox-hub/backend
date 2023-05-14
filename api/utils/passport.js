@@ -11,13 +11,12 @@ passport.use(
       callbackURL: "/user/google/callback",
       scope: ["profile", "email"],
     },
-    function (accessToken, refreshToken, profile, callback) {
+    function (res, accessToken, refreshToken, profile, callback) {
       let info = profile._json;
 
-      User.find({ google_id: profile.id })
+      User.find({ email: info.email })
         .exec()
         .then((result) => {
-          console.log(result);
           if (result.length >= 1) {
             callback(null, profile);
           } else {
@@ -35,7 +34,8 @@ passport.use(
               callback(null, profile);
             });
           }
-        });
+        })
+        .catch((err) => res.status(500).json({ error: err }));
     }
   )
 );

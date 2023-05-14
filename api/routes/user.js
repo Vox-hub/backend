@@ -24,7 +24,7 @@ router.get("/:user", checkAuth, getUser);
 
 router.get("/login/success", (req, res) => {
   if (req.user) {
-    User.find({ google_id: req.user.id }).then((user) => {
+    User.find({ email: req.user._json.email }).then((user) => {
       const token = jwt.sign(
         {
           userId: user[0]._id,
