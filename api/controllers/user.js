@@ -122,7 +122,7 @@ exports.signUp = (req, res, next) => {
                 <p>
 Thank you for signing up for our service. We are excited to have you on board! To complete the registration process, please click the button below to verify your email address:
                 </p>
-                <a href=http://storytalk.ai/verify/${token}> here </a>
+                <a href=${process.env.CLIENT_URL}/verify/${token}> here </a>
                 
                 <p>
                 If you did not sign up for our service, please ignore this email.
@@ -324,6 +324,40 @@ exports.changePassword = (req, res, next) => {
         error: err,
       });
     });
+};
+
+exports.resendVerification = async (req, res, next) => {
+  let email = req.params.email;
+
+  try {
+    const user = await User.find({ email: email }).select(
+      "firstname lastname confirmationCode"
+    );
+
+    mailer
+      .sendEmail(
+        process.env.AUTH_USER,
+        email,
+        "StoryTalk: Please verify your email address to complete registration",
+        `
+             
+                <h2>Dear ${user[0].firstname} ${user[0].lastname}</h2>
+                <p>
+Thank you for signing up for our service. We are excited to have you on board! To complete the registration process, please click the button below to verify your email address:
+                </p>
+                <a href=${process.env.CLIENT_URL}/verify/${user[0].confirmationCode}> here </a>
+                
+                <p>
+                If you did not sign up for our service, please ignore this email.
+                </p>
+                <b>Thanks, StoryTalk Team</b>
+                </div>
+                `
+      )
+      .then(() => res.status(200).json({ message: "Sent!" }));
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
 };
 
 exports.deleteUser = (req, res, next) => {

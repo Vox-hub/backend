@@ -15,6 +15,7 @@ const {
   updateUser,
   changePassword,
   forgotPassword,
+  resendVerification,
   deleteUser,
 } = require("../controllers/user");
 
@@ -77,6 +78,7 @@ router.get("/logout", (req, res) => {
 });
 // oath features
 router.patch("/verify/:token", userVerification);
+router.get("/resend/:email", resendVerification);
 router.get("/forgotpassword/:email", forgotPassword);
 router.patch("/:userId", checkAuth, updateUser);
 router.patch("/changepassword/:code", changePassword);
