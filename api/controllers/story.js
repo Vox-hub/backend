@@ -8,6 +8,7 @@ const User = require("../models/user");
 const Story = require("../models/story");
 const Subscription = require("../models/subscription");
 
+const { imagine, upscale, result } = require("../utils/midjourney");
 const { uploadFile } = require("../utils/spaces");
 const { createRecording } = require("../utils/voice");
 
@@ -17,7 +18,6 @@ const configuration = new Configuration({
 
 exports.getStories = (req, res, next) => {
   Story.find()
-    .select("_id story author picture isVC createdAt")
     .populate({
       path: "author",
       select: "_id username email firstname lastname subscriptionData",
@@ -30,7 +30,6 @@ exports.getStories = (req, res, next) => {
 
 exports.getStory = (req, res, next) => {
   Story.find({ _id: req.params.storyId })
-    .select("_id story author picture isVC createdAt")
     .populate({
       path: "author",
       select: "_id username email firstname lastname subscriptionData",
@@ -47,100 +46,160 @@ exports.getStory = (req, res, next) => {
 };
 
 exports.addStory = async (req, res, next) => {
+  let subject = req.body.subject;
+
   const openai = new OpenAIApi(configuration);
-  const text = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: `Write me a title and story about ${req.body.subject} in 1000 characters`,
-    max_tokens: 2048,
-    n: 1,
-    stop: null,
-    temperature: 0.7,
-  });
-  const image = await openai.createImage({
-    prompt: req.body.subject,
-    n: 1,
-    size: "1024x1024",
-  });
-  const imageUrl = image.data.data[0].url;
-  const generateRandomString = () => {
-    let result = "";
-    const characters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    const charactersLength = characters.length;
-    for (let i = 0; i < 16; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-  };
-  let filename = generateRandomString();
-
-  const path = Path.resolve(`temp/${filename}.jpg`);
-  const writer = Fs.createWriteStream(path);
-  const imageResponse = await axios.get(imageUrl, {
-    responseType: "stream",
-  });
-  imageResponse.data.pipe(writer);
-  await new Promise((resolve, reject) => {
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
-
-  const fileContent = Fs.readFileSync(path);
-
-  const params = {
-    ACL: "public-read",
-    Bucket: "storytalk",
-    Key: `stories/${filename}.jpg`,
-    Body: fileContent,
-    ContentType: "image/jpg",
-  };
 
   try {
-    await uploadFile({ params });
+    const text = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Write me a title and story about ${subject} in 1000 characters`,
+      max_tokens: 2048,
+      n: 1,
+      stop: null,
+      temperature: 0.7,
+    });
 
-    Fs.unlink(path, (err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        if (req.body.author === "guest") {
-          const story = new Story({
-            _id: new mongoose.Types.ObjectId(),
-            story: text.data.choices[0].text,
-            picture: `stories/${filename}.jpg`,
-          });
+    if (req.body.author === "guest") {
+      const story = new Story({
+        _id: new mongoose.Types.ObjectId(),
+        story: text.data.choices[0].text,
+      });
 
-          story.save().then(() => {
+      story.save().then(async (story) => {
+        let data = {
+          msg: subject,
+          ref: {
+            _id: story._id,
+          },
+        };
+        const image = await imagine(data);
+
+        res.status(200).json({
+          message: "Story created",
+          _id: story._id,
+          result: image,
+        });
+      });
+    } else {
+      const story = new Story({
+        _id: new mongoose.Types.ObjectId(),
+        story: text.data.choices[0].text,
+        author: req.body.author,
+      });
+
+      story
+        .save()
+        .then(async (story) => {
+          let data = {
+            msg: subject,
+            ref: {
+              _id: story._id,
+            },
+          };
+          const image = await imagine(data);
+          User.findByIdAndUpdate(req.body.author, {
+            $push: { stories: story._id },
+          }).then(() => {
             res.status(200).json({
               message: "Story created",
               _id: story._id,
+              result: image,
             });
           });
-        } else {
-          const story = new Story({
-            _id: new mongoose.Types.ObjectId(),
-            story: text.data.choices[0].text,
-            author: req.body.author,
-            picture: `stories/${filename}.jpg`,
-          });
-
-          story
-            .save()
-            .then((story) => {
-              User.findByIdAndUpdate(req.body.author, {
-                $push: { stories: story._id },
-              }).then(() => {
-                res.status(200).json({
-                  message: "Story created",
-                  _id: story._id,
-                });
-              });
-            })
-            .catch((err) => res.status(500).json({ error: err }));
-        }
-      }
-    });
+        })
+        .catch((err) => res.status(500).json({ error: err }));
+    }
   } catch (err) {
-    console.error(err);
+    res.status(500).json({ error: err });
+  }
+};
+
+exports.handleWebhook = async (req, res, next) => {
+  let { type, ref } = req.body;
+
+  if (type === "imagine") {
+    let { imageUrl, buttons, ref, originatingMessageId, buttonMessageId } =
+      req.body;
+    let data = {
+      imageUrl: imageUrl,
+      buttons: buttons,
+      buttonMessageId: buttonMessageId,
+      originatingMessageId: originatingMessageId,
+    };
+
+    await Story.updateOne({ _id: ref._id }, { midjourney_data: data }).then(
+      () => {
+        res.status(200).json({ message: "Saved!" });
+      }
+    );
+  } else if (type === "button") {
+    try {
+      const story = await Story.findById(ref._id);
+
+      let imageUrl = req.body.imageUrl;
+
+      // save file temporary
+      const path = Path.resolve(`temp/${story._id}.png`);
+      const writer = Fs.createWriteStream(path);
+      const imageResponse = await axios.get(imageUrl, {
+        responseType: "stream",
+      });
+      imageResponse.data.pipe(writer);
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      });
+
+      // uploading it to s3
+      const fileContent = Fs.readFileSync(path);
+
+      const params = {
+        ACL: "public-read",
+        Bucket: "storytalk",
+        Key: `stories/${story._id}.png`,
+        Body: fileContent,
+        ContentType: "image/png",
+      };
+
+      await uploadFile({ params }).then(() => {
+        Fs.unlink(path, async (err) => {
+          if (err) {
+            console.error(err);
+          } else {
+            await Story.updateOne(
+              { _id: ref._id },
+              { picture: `stories/${story._id}.png` }
+            ).then(() => res.status(200).json({ message: "Saved image!" }));
+          }
+        });
+      });
+    } catch (err) {
+      res.status(500).json({ error: err });
+    }
+  }
+};
+
+exports.upscaleImage = async (req, res, next) => {
+  const { storyId } = req.params;
+  const { button } = req.body;
+
+  try {
+    const storyData = await Story.findById(storyId);
+
+    const data = {
+      buttonMessageId: storyData.midjourney_data.buttonMessageId,
+      button: button,
+      ref: {
+        _id: storyData._id,
+      },
+    };
+
+    const response = await upscale(data);
+
+    res.status(200).json({ message: "Sent request!", response: response });
+  } catch (err) {
+    res.status(500).json({ error: err });
   }
 };
 

@@ -20,7 +20,7 @@ const {
 } = require("../controllers/user");
 
 // fetching users
-router.get("/", checkAuth, getUsers);
+router.get("/", getUsers);
 router.get("/:user", checkAuth, getUser);
 
 router.get("/login/success", (req, res) => {

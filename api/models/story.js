@@ -8,7 +8,8 @@ const storySchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  picture: { type: String, required: true },
+  midjourney_data: {},
+  picture: { type: String },
   isVC: { type: Boolean },
   createdAt: {
     type: Date,
