@@ -1,7 +1,7 @@
 const http = require("http");
 const app = require("./app");
 var fs = require("fs");
-const localtunnel = require("localtunnel");
+// const localtunnel = require("localtunnel");
 
 const port = process.env.PORT || 3001;
 
@@ -13,13 +13,13 @@ if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir);
 }
 
-(async () => {
-  const tunnel = await localtunnel({
-    port: 3001,
-    subdomain: "raaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  });
+// (async () => {
+//   const tunnel = await localtunnel({
+//     port: 3001,
+//     subdomain: "raaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+//   });
 
-  console.log(`Running at ${tunnel.url}`);
-})();
+//   console.log(`Running at ${tunnel.url}`);
+// })();
 
 server.listen(port);
