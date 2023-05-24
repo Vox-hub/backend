@@ -53,7 +53,7 @@ exports.addStory = async (req, res, next) => {
   try {
     const text = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Write me a title and story about ${subject} in 1000 characters`,
+      prompt: `Write me a title and story that will be enjoyable by adults and kids  about ${subject} in 250 words`,
       max_tokens: 2048,
       n: 1,
       stop: null,
