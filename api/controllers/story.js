@@ -224,6 +224,7 @@ exports.getAudio = async (req, res, next) => {
       Text: storyData.story,
       OutputFormat: "mp3",
       VoiceId: voiceId,
+      Engine: "neural",
     };
     const data = await createRecording(audio);
     const filePath = `temp/${storyId}.mp3`;
