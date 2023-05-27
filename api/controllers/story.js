@@ -2,19 +2,15 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const Fs = require("fs");
 const Path = require("path");
-const { Configuration, OpenAIApi } = require("openai");
 
 const User = require("../models/user");
 const Story = require("../models/story");
 const Subscription = require("../models/subscription");
 
-const { imagine, upscale, result } = require("../utils/midjourney");
-const { uploadFile } = require("../utils/spaces");
+const { makeStory } = require("../utils/openai");
+const { imagine, upscale } = require("../utils/midjourney");
+const { uploadFile, deleteFile } = require("../utils/spaces");
 const { createRecording } = require("../utils/voice");
-
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 exports.getStories = (req, res, next) => {
   Story.find()
@@ -48,25 +44,18 @@ exports.getStory = (req, res, next) => {
 exports.addStory = async (req, res, next) => {
   let subject = req.body.subject;
 
-  const openai = new OpenAIApi(configuration);
-
   try {
-    const text = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `Write me a title and story that will be enjoyable by adults and kids  about ${subject} in 250 words`,
-      max_tokens: 2048,
-      n: 1,
-      stop: null,
-      temperature: 0.7,
+    const text = await makeStory(subject);
+
+    const story = new Story({
+      _id: new mongoose.Types.ObjectId(),
+      story: text.choices[0].text,
+      author: req.body.author,
     });
 
-    if (req.body.author === "guest") {
-      const story = new Story({
-        _id: new mongoose.Types.ObjectId(),
-        story: text.data.choices[0].text,
-      });
-
-      story.save().then(async (story) => {
+    story
+      .save()
+      .then(async (story) => {
         let data = {
           msg: subject,
           ref: {
@@ -74,42 +63,17 @@ exports.addStory = async (req, res, next) => {
           },
         };
         const image = await imagine(data);
-
-        res.status(200).json({
-          message: "Story created",
-          _id: story._id,
-          result: image,
-        });
-      });
-    } else {
-      const story = new Story({
-        _id: new mongoose.Types.ObjectId(),
-        story: text.data.choices[0].text,
-        author: req.body.author,
-      });
-
-      story
-        .save()
-        .then(async (story) => {
-          let data = {
-            msg: subject,
-            ref: {
-              _id: story._id,
-            },
-          };
-          const image = await imagine(data);
-          User.findByIdAndUpdate(req.body.author, {
-            $push: { stories: story._id },
-          }).then(() => {
-            res.status(200).json({
-              message: "Story created",
-              _id: story._id,
-              result: image,
-            });
+        User.findByIdAndUpdate(req.body.author, {
+          $push: { stories: story._id },
+        }).then(() => {
+          res.status(200).json({
+            message: "Story created",
+            _id: story._id,
+            result: image,
           });
-        })
-        .catch((err) => res.status(500).json({ error: err }));
-    }
+        });
+      })
+      .catch((err) => res.status(500).json({ error: err }));
   } catch (err) {
     res.status(500).json({ error: err });
   }
@@ -282,8 +246,22 @@ exports.updateStory = (req, res, next) => {
 };
 
 exports.deleteStory = (req, res, next) => {
-  Story.deleteOne({ _id: req.params.storyId })
+  let storyId = req.params.storyId;
+
+  Story.deleteOne({ _id: storyId })
     .exec()
-    .then((result) => res.status(200).json({ message: "Story deleted" }))
+    .then(async () => {
+      let keyRecording = `recording/${storyId}.mp3`;
+      let keyImage = `stories/${storyId}.png`;
+
+      try {
+        await deleteFile(keyRecording);
+        await deleteFile(keyImage);
+
+        res.status(200).json({ message: "Story deleted" });
+      } catch (err) {
+        res.status(500).json({ error: err });
+      }
+    })
     .catch((err) => res.status(500).json({ error: err }));
 };

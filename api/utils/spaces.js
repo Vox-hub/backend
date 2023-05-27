@@ -21,3 +21,15 @@ exports.uploadFile = async ({ params }) => {
     console.log("Error", err);
   }
 };
+
+exports.deleteFile = async (key) => {
+  try {
+    let params = { Bucket: "storytalk", Key: key };
+
+    const data = await s3Client.deleteObject(params);
+
+    return data;
+  } catch (err) {
+    return err;
+  }
+};
