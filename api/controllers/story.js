@@ -31,7 +31,7 @@ exports.getStory = (req, res, next) => {
       select: "_id username email firstname lastname subscriptionData",
       populate: {
         path: "subscriptionData",
-        select: "subscription_plan_id stories_ttv",
+        select: "subscription_plan_id",
       },
     })
     .exec()
@@ -42,7 +42,9 @@ exports.getStory = (req, res, next) => {
 };
 
 exports.addStory = async (req, res, next) => {
-  let subject = req.body.subject;
+  let { author, subject } = req.body;
+
+  let userData = await User.findById(author);
 
   try {
     const text = await makeStory(subject);
@@ -50,7 +52,7 @@ exports.addStory = async (req, res, next) => {
     const story = new Story({
       _id: new mongoose.Types.ObjectId(),
       story: text.choices[0].text,
-      author: req.body.author,
+      author: author,
     });
 
     story
@@ -63,15 +65,20 @@ exports.addStory = async (req, res, next) => {
           },
         };
         const image = await imagine(data);
-        User.findByIdAndUpdate(req.body.author, {
+        let credits = userData.credits - 1;
+
+        User.findByIdAndUpdate(author, {
           $push: { stories: story._id },
-        }).then(() => {
-          res.status(200).json({
-            message: "Story created",
-            _id: story._id,
-            result: image,
-          });
-        });
+          credits: credits,
+        })
+          .then(async () => {
+            res.status(200).json({
+              message: "Story created",
+              _id: story._id,
+              result: image,
+            });
+          })
+          .catch((err) => res.status(500).json({ error: err }));
       })
       .catch((err) => res.status(500).json({ error: err }));
   } catch (err) {
@@ -175,7 +182,7 @@ exports.getAudio = async (req, res, next) => {
     const storyData = await Story.findById(storyId).populate({
       path: "author",
       select: "_id subscriptionData",
-      populate: { path: "subscriptionData", select: "_id stories_ttv" },
+      populate: { path: "subscriptionData", select: "_id" },
     });
 
     if (storyData.isVC) {
@@ -208,14 +215,6 @@ exports.getAudio = async (req, res, next) => {
       if (err) {
         console.error(err);
       } else {
-        if (storyData?.author?.subscriptionData) {
-          const newCount = storyData.author.subscriptionData.stories_ttv - 1;
-          await Subscription.updateOne(
-            { _id: storyData.author.subscriptionData._id },
-            { stories_ttv: newCount }
-          );
-        }
-
         await Story.updateOne({ _id: storyId }, { isVC: true });
 
         return res

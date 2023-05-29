@@ -30,7 +30,6 @@ exports.createSubscription = (req, res, next) => {
     status: status,
     cancel_url: cancel_url,
     update_url: update_url,
-    stories_ttv: 500,
   });
 
   subscription
@@ -38,7 +37,7 @@ exports.createSubscription = (req, res, next) => {
     .then((result) => {
       User.findOneAndUpdate(
         { _id: JSON.parse(req.body.passthrough).userId },
-        { subscriptionData: result._id }
+        { subscriptionData: result._id, credits: 500 }
       )
         .then(() => {
           res.status(200).json(`Subscription created ${subscription_id}`);
@@ -63,33 +62,19 @@ exports.cancelSubscription = (req, res, next) => {
 };
 
 exports.addFeatures = (req, res, next) => {
-  User.find({ email: req.body.email })
+  User.findOneAndUpdate({ email: req.body.email }, { credits: 500 })
     .exec()
-    .then((result) => {
-      Subscription.findOneAndUpdate(
-        { _id: result[0].subscriptionData },
-        { stories_ttv: 500 }
-      )
-        .then(() => {
-          res.status(200);
-        })
-        .catch((err) => res.status(500).json({ error: err }));
+    .then(() => {
+      res.status(200);
     })
     .catch((err) => res.status(500).json({ err }));
 };
 
 exports.removeFeatures = (req, res, next) => {
-  User.find({ email: req.body.email })
+  User.findOneAndUpdate({ email: req.body.email }, { credits: 0 })
     .exec()
-    .then((result) => {
-      Subscription.findOneAndUpdate(
-        { _id: result[0].subscriptionData },
-        { stories_ttv: 0 }
-      )
-        .then(() => {
-          res.status(200);
-        })
-        .catch((err) => res.status(500).json({ error: err }));
+    .then(() => {
+      res.status(200);
     })
     .catch((err) => res.status(500).json({ err }));
 };

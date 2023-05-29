@@ -16,6 +16,7 @@ const userSchema = mongoose.Schema({
   role: { type: String },
   verified: { type: Boolean, required: true },
   password: { type: String },
+  credits: { type: Number },
   stories: [
     {
       type: mongoose.Schema.Types.ObjectId,

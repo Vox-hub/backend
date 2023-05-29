@@ -9,7 +9,6 @@ const subscriptionSchema = mongoose.Schema({
   status: { type: String, required: true },
   cancel_url: { type: String, required: true },
   update_url: { type: String, required: true },
-  stories_ttv: { type: Number },
   createdAt: {
     type: Date,
     default: () => moment().utc(),

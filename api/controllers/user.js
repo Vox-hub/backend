@@ -10,7 +10,7 @@ const tokenExp = "24h";
 exports.getUsers = (req, res, next) => {
   User.find()
     .select(
-      "_id firstname lastname email role verified confirmationCode stories voiceuuid createdAt subscriptionData"
+      "_id firstname lastname email credits role verified confirmationCode stories voiceuuid createdAt subscriptionData"
     )
     .populate("subscriptionData")
     .populate("stories")
@@ -23,7 +23,7 @@ exports.getUser = (req, res, next) => {
 
   User.find({ _id: user })
     .select(
-      "_id firstname lastname email role verified stories voiceuuid createdAt subscriptionData"
+      "_id firstname lastname email credits role verified stories voiceuuid createdAt subscriptionData"
     )
     .populate("subscriptionData")
     .populate("stories")
@@ -109,7 +109,7 @@ exports.signUp = (req, res, next) => {
               verified: false,
               password: hash,
               confirmationCode: token,
-              voiceuuid: "",
+              credits: 3,
             });
             mailer
               .sendEmail(
