@@ -9,13 +9,7 @@ const checkAuth = require("../middleware/check-auth.js");
 const {
   getUsers,
   getUser,
-  signUp,
-  signIn,
-  userVerification,
   updateUser,
-  changePassword,
-  forgotPassword,
-  resendVerification,
   deleteUser,
 } = require("../controllers/user");
 
@@ -60,10 +54,6 @@ router.get("/login/failed", (req, res) => {
   });
 });
 
-// oath handlers
-router.post("/signup", signUp);
-router.post("/signin", signIn);
-
 router.get(
   "/google/callback",
   passport.authenticate("google", {
@@ -76,12 +66,9 @@ router.get("/logout", (req, res) => {
   req.logout();
   res.redirect(process.env.CLIENT_URL);
 });
+
 // oath features
-router.patch("/verify/:token", userVerification);
-router.get("/resend/:email", resendVerification);
-router.get("/forgotpassword/:email", forgotPassword);
 router.patch("/:userId", checkAuth, updateUser);
-router.patch("/changepassword/:code", changePassword);
 router.delete("/:userId", checkAuth, deleteUser);
 
 module.exports = router;

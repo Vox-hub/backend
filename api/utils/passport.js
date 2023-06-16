@@ -3,11 +3,13 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const passport = require("passport");
 const User = require("../models/user");
 
+const { CLIENT_ID, CLIENT_SECRET } = process.env
+
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
+      clientID: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
       callbackURL: "/user/google/callback",
       scope: ["profile", "email"],
     },
@@ -26,8 +28,6 @@ passport.use(
               email: info.email,
               firstname: info.given_name,
               lastname: info.family_name,
-              role: "member",
-              verified: true,
             });
 
             user.save().then(() => {

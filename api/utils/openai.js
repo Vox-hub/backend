@@ -6,11 +6,11 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-exports.makeStory = async (subject) => {
+exports.sendPrompt = async (prompt) => {
   try {
     const text = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Write me a title and story that will be enjoyable by adults and kids  about ${subject} in 250 words`,
+      prompt: prompt,
       max_tokens: 2048,
       n: 1,
       stop: null,
