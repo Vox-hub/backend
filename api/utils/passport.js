@@ -16,6 +16,7 @@ passport.use(
     function (res, accessToken, refreshToken, profile, callback) {
       let info = profile._json;
 
+      console.log(info)
       User.find({ email: info.email })
         .exec()
         .then((result) => {

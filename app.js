@@ -10,13 +10,19 @@ const passportStrategy = require("./api/utils/passport.js");
 const userRoutes = require("./api/routes/user");
 const contactRoutes = require("./api/routes/contact")
 
-mongoose.connect(
-  process.env.MONGOOSE_STRING,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+function Main() {
+  mongoose.createConnection(
+    `mongodb+srv://admin:${process.env.MONGOOSE_PW}@cluster0.2kbs0rs.mongodb.net/?retryWrites=true&w=majority`,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  ).then(() => {
+    console.log("connected!")
+  })
+}
+
+Main()
 
 mongoose.Promise = global.Promise;
 
