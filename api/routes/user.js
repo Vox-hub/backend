@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
-const jwt = require("jsonwebtoken");
-const User = require("../models/user");
 
 const checkAuth = require("../middleware/check-auth.js");
 
 const {
   getUsers,
   getUser,
+  handleLoginSuccess,
   updateUser,
   deleteUser,
 } = require("../controllers/user");
@@ -17,35 +16,7 @@ const {
 router.get("/", getUsers);
 router.get("/:user", checkAuth, getUser);
 
-router.get("/login/success", (req, res) => {
-  if (req.user) {
-    User.find({ email: req.user._json.email }).then((user) => {
-      const token = jwt.sign(
-        {
-          userId: user[0]._id,
-          google_id: req.user.id,
-          firstname: user[0].firstname,
-          lastname: user[0].lastname,
-          email: user[0].email,
-          role: user[0].role,
-        },
-        process.env.PRIVATE_KEY,
-        {
-          expiresIn: "24h",
-        }
-      );
-
-      res.status(200).json({
-        error: false,
-        message: "Successfully Loged In",
-        user: req.user,
-        token: token,
-      });
-    });
-  } else {
-    res.status(403).json({ error: true, message: "Not Authorized" });
-  }
-});
+router.get("/login/success", handleLoginSuccess);
 
 router.get("/login/failed", (req, res) => {
   res.status(401).json({
@@ -57,8 +28,17 @@ router.get("/login/failed", (req, res) => {
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    successRedirect: `${process.env.CLIENT_URL}/google`,
+    successRedirect: `${process.env.CLIENT_URL}/auth-handler`,
     failureRedirect: "/login/failed",
+  })
+);
+
+router.get(
+  "/github/callback",
+  passport.authenticate("github", {
+    scope: ["user:email"],
+    successRedirect: `${process.env.CLIENT_URL}/auth-handler`,
+    failureRedirect: "/",
   })
 );
 

@@ -8,23 +8,31 @@ const passport = require("passport");
 const session = require("express-session");
 const passportStrategy = require("./api/utils/passport.js");
 const userRoutes = require("./api/routes/user");
-const contactRoutes = require("./api/routes/contact")
+const requestRoutes = require("./api/routes/request");
+const subscriptionRoutes = require("./api/routes/subscription");
+const contactRoutes = require("./api/routes/contact");
 
-function Main() {
-  mongoose.createConnection(
-    `mongodb+srv://admin:${process.env.MONGOOSE_PW}@cluster0.2kbs0rs.mongodb.net/?retryWrites=true&w=majority`,
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  ).then(() => {
-    console.log("connected!")
-  })
-}
+const connectToDatabase = async () => {
+  try {
+    await mongoose.connect(
+      `mongodb+srv://admin:${process.env.MONGOOSE_PW}@cryptofunds.tm1wc8l.mongodb.net/?retryWrites=true&w=majority`,
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+      }
+    );
 
-Main()
+    mongoose.Promise = global.Promise;
 
-mongoose.Promise = global.Promise;
+    console.log("MongoDB connected successfully!");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  }
+};
+
+connectToDatabase();
 
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
@@ -39,7 +47,7 @@ app.use(
 );
 app.use(
   session({
-    secret: process.env.CLIENT_SECRET,
+    secret: process.env.PRIVATE_KEY,
     resave: true,
     saveUninitialized: true,
   })
@@ -55,6 +63,8 @@ app.use(function (req, res, next) {
 });
 
 app.use("/user", userRoutes);
+app.use("/request", requestRoutes);
+app.use("/subscription", subscriptionRoutes);
 app.use("/contact", contactRoutes);
 
 app.use((req, res, next) => {
