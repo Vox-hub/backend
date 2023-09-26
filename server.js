@@ -13,13 +13,13 @@ if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir);
 }
 
-// (async () => {
-//   const tunnel = await localtunnel({
-//     port: 3001,
-//     subdomain: "voxhub",
-//   });
+(async () => {
+  const tunnel = await localtunnel({
+    port: 3001,
+    subdomain: "voxhub",
+  });
 
-//   console.log(`Running at ${tunnel.url}`);
-// })();
+  console.log(`Running at ${tunnel.url}`);
+})();
 
 server.listen(port);
